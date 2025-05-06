@@ -1,0 +1,10 @@
+pandas
+requests
+mlflow
+prefect
+fastapi
+uvicorn
+docker
+python-dotenv
+evidently
+grafana-client

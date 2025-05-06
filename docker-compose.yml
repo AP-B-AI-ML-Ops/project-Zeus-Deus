@@ -1,0 +1,28 @@
+services:
+  api:
+    build: ./src/api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - mlflow
+      - prefect
+  mlflow:
+    image: mlflow/mlflow:latest
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+  prefect:
+    image: prefecthq/prefect:2-latest
+    environment:
+      - PREFECT_API_URL=http://prefect:4200
+    ports:
+      - "4200:4200"
+  monitoring:
+    build: ./monitoring
+    ports:
+      - "8050:8050"
+    env_file:
+      - .env
