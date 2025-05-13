@@ -1,0 +1,23 @@
+{
+  "name": "Wildfire MLOps Notebooks",
+  "build": {
+    "context": "../..",
+    "dockerfile": "../../notebooks/Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "mechatroner.rainbow-csv"
+      ]
+    }
+  },
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind",
+    "source=${localWorkspaceFolder}/data,target=/workspace/data,type=bind",
+    "source=${localWorkspaceFolder}/notebooks,target=/workspace/notebooks,type=bind",
+    "source=${localWorkspaceFolder}/.cursor,target=/workspace/.cursor,type=bind"
+  ]
+}
