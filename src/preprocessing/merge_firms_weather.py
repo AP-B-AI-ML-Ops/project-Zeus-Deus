@@ -49,10 +49,13 @@ def merge_events_with_weather(firms_events, weather_data):
     weather_lookup = {}
     for entry in weather_data:
         event = entry["event"]
-        key = (round(event["lat"], 3), round(event["lon"], 3), str(event["date"]))
+        # Normalize date to just YYYY-MM-DD
+        weather_date = str(event["date"]).split(" ")[0]
+        key = (round(float(event["lat"]), 2), round(float(event["lon"]), 2), weather_date)
         weather_lookup[key] = entry["weather"]
     for event in firms_events:
-        key = (round(event["lat"], 3), round(event["lon"], 3), event["date"])
+        fire_date = str(event["date"]).split(" ")[0]
+        key = (round(float(event["lat"]), 2), round(float(event["lon"]), 2), fire_date)
         weather = weather_lookup.get(key)
         merged.append({"event": event, "weather": weather})
     return merged
