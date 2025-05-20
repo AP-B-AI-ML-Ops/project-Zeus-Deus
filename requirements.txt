@@ -8,3 +8,6 @@ docker
 python-dotenv
 evidently
 grafana-client
+meteostat
+tqdm
+scikit-learn

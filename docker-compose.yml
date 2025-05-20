@@ -11,10 +11,15 @@ services:
       - ./src:/app/src
       - ./data:/app/data
       - ./notebooks:/app/notebooks
+      - ./models:/app/models
   mlflow:
     build: ./experiment_tracking
     ports:
       - "5000:5000"
+    volumes:
+      - ./mlflow:/mlflow
+    environment:
+      - MLFLOW_TRACKING_URI=sqlite:///mlflow.db
 
   database:
     build: ./database
@@ -23,18 +28,31 @@ services:
       - postgres-data:/var/lib/postgresql/data
     env_file:
       - ./database/.env
-  # prefect:
-  #   image: prefecthq/prefect:2-latest
-  #   environment:
-  #     - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
-  #   ports:
-  #     - "4200:4200"
-  # monitoring:
-  #   build: ./monitoring
-  #   ports:
-  #     - "8050:8050"
-  #   environment:
-  #     - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+
+  prefect:
+    image: prefecthq/prefect:2-latest
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./orchestration:/app/orchestration
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    command: prefect server start --host 0.0.0.0
+
+  monitoring:
+    build:
+      context: ./monitoring
+    ports:
+      - "8050:8050"
+    volumes:
+      - ./monitoring:/app/monitoring
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
 
 volumes:
   postgres-data:

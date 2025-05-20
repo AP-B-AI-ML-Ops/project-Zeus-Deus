@@ -20,4 +20,8 @@ RUN pip install --upgrade pip && \
 # Copy API source code
 COPY . .
 
-CMD ["tail", "-f", "/dev/null"]
+# Expose port
+EXPOSE 8000
+
+# Run the FastAPI server
+CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
