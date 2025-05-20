@@ -5,7 +5,10 @@ Purpose: Download and update wildfire data from NASA FIRMS API.
 import os
 import logging
 import requests
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 NASA_FIRMS_API_URL = os.getenv("NASA_FIRMS_API_URL")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
@@ -22,6 +25,7 @@ def fetch_nasa_firms_data():
         response = requests.get(url)
         response.raise_for_status()
         data_path = os.path.join(os.path.dirname(__file__), '../../data/nasa_firms_data.json')
+        os.makedirs(os.path.dirname(data_path), exist_ok=True)  # Ensure data directory exists
         with open(data_path, 'w') as f:
             f.write(response.text)
         logging.info(f"NASA FIRMS data saved to {data_path}")
