@@ -99,14 +99,15 @@ def generate_data_drift_report(reference_data, current_data):
     """Generate a data drift report using Evidently."""
     logger.info("Generating data drift report")
     
-    # Define column mapping for Evidently
+    # For evidently 0.2.8, we need a simpler column mapping without 'embeddings'
     column_mapping = {
+        'target': 'high_severity',
+        'prediction': None,
         'numerical_features': [
             'brightness', 'scan', 'track', 'confidence', 'bright_t31', 'frp',
             'tavg', 'tmin', 'tmax', 'prcp', 'wspd', 'pres', 'ndvi', 'evi'
         ],
-        'categorical_features': ['daynight'],
-        'target': 'high_severity'
+        'categorical_features': ['daynight']
     }
     
     # Create a data drift report
@@ -116,32 +117,37 @@ def generate_data_drift_report(reference_data, current_data):
     ])
     
     # Calculate the report
-    data_drift_report.run(
-        reference_data=reference_data,
-        current_data=current_data,
-        column_mapping=column_mapping
-    )
-    
-    # Save the report to HTML
-    os.makedirs("reports", exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_path = f"reports/data_drift_{timestamp}.html"
-    data_drift_report.save_html(report_path)
-    
-    return data_drift_report, report_path
+    try:
+        data_drift_report.run(
+            reference_data=reference_data,
+            current_data=current_data,
+            column_mapping=column_mapping
+        )
+        
+        # Save the report to HTML
+        os.makedirs("reports", exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_path = f"reports/data_drift_{timestamp}.html"
+        data_drift_report.save_html(report_path)
+        
+        return data_drift_report, report_path
+    except Exception as e:
+        logger.error(f"Error generating data drift report: {e}")
+        return None, None
 
 def generate_target_drift_report(reference_data, current_data):
     """Generate a target drift report using Evidently."""
     logger.info("Generating target drift report")
     
-    # Define column mapping for Evidently
+    # For evidently 0.2.8, we need a simpler column mapping without 'embeddings'
     column_mapping = {
+        'target': 'high_severity',
+        'prediction': None,
         'numerical_features': [
             'brightness', 'scan', 'track', 'confidence', 'bright_t31', 'frp',
             'tavg', 'tmin', 'tmax', 'prcp', 'wspd', 'pres', 'ndvi', 'evi'
         ],
-        'categorical_features': ['daynight'],
-        'target': 'high_severity'
+        'categorical_features': ['daynight']
     }
     
     # Create a target drift report
@@ -150,19 +156,23 @@ def generate_target_drift_report(reference_data, current_data):
     ])
     
     # Calculate the report
-    target_drift_report.run(
-        reference_data=reference_data,
-        current_data=current_data,
-        column_mapping=column_mapping
-    )
-    
-    # Save the report to HTML
-    os.makedirs("reports", exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_path = f"reports/target_drift_{timestamp}.html"
-    target_drift_report.save_html(report_path)
-    
-    return target_drift_report, report_path
+    try:
+        target_drift_report.run(
+            reference_data=reference_data,
+            current_data=current_data,
+            column_mapping=column_mapping
+        )
+        
+        # Save the report to HTML
+        os.makedirs("reports", exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_path = f"reports/target_drift_{timestamp}.html"
+        target_drift_report.save_html(report_path)
+        
+        return target_drift_report, report_path
+    except Exception as e:
+        logger.error(f"Error generating target drift report: {e}")
+        return None, None
 
 # Initialize the Dash app
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
@@ -261,59 +271,75 @@ def update_output(n_clicks, reference_dataset, current_dataset):
         data_drift_report, data_drift_path = generate_data_drift_report(reference_df, current_df)
         target_drift_report, target_drift_path = generate_target_drift_report(reference_df, current_df)
         
-        # Create a summary of data drift
-        data_drift_summary = html.Div([
-            html.H3("Data Drift Summary"),
-            html.P("Data drift analysis completed."),
-            html.A("View Data Drift Report", href=f"/{data_drift_path}", target="_blank")
-        ])
+        if data_drift_path is None:
+            data_drift_summary = html.Div([
+                html.H3("Data Drift Analysis Error"),
+                html.P("Could not generate data drift report. Check logs for details.")
+            ])
+        else:
+            data_drift_summary = html.Div([
+                html.H3("Data Drift Summary"),
+                html.P("Data drift analysis completed."),
+                html.A("View Data Drift Report", href=f"/{data_drift_path}", target="_blank")
+            ])
         
-        # Create a summary of target drift
-        target_drift_summary = html.Div([
-            html.H3("Target Drift Summary"),
-            html.P("Target drift analysis completed."),
-            html.A("View Target Drift Report", href=f"/{target_drift_path}", target="_blank")
-        ])
+        if target_drift_path is None:
+            target_drift_summary = html.Div([
+                html.H3("Target Drift Analysis Error"),
+                html.P("Could not generate target drift report. Check logs for details.")
+            ])
+        else:
+            target_drift_summary = html.Div([
+                html.H3("Target Drift Summary"),
+                html.P("Target drift analysis completed."),
+                html.A("View Target Drift Report", href=f"/{target_drift_path}", target="_blank")
+            ])
         
         # Get model performance metrics from MLflow
         client = MlflowClient()
-        experiment = mlflow.get_experiment_by_name("wildfire-prediction")
         
-        if experiment:
-            runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
+        try:
+            experiment = mlflow.get_experiment_by_name("wildfire-prediction")
             
-            if len(runs) > 0:
-                # Extract metrics and timestamps
-                timestamps = pd.to_datetime(runs['start_time']).dt.strftime('%Y-%m-%d')
+            if experiment:
+                runs = mlflow.search_runs(experiment_ids=[experiment.experiment_id])
                 
-                # Create performance graph
-                performance_fig = go.Figure()
-                
-                if 'metrics.accuracy' in runs.columns:
-                    accuracy = runs['metrics.accuracy']
-                    performance_fig.add_trace(go.Scatter(x=timestamps, y=accuracy, mode='lines+markers', name='Accuracy'))
-                
-                # Add precision and recall if available
-                if 'metrics.precision' in runs.columns:
-                    precision = runs['metrics.precision']
-                    performance_fig.add_trace(go.Scatter(x=timestamps, y=precision, mode='lines+markers', name='Precision'))
-                
-                if 'metrics.recall' in runs.columns:
-                    recall = runs['metrics.recall']
-                    performance_fig.add_trace(go.Scatter(x=timestamps, y=recall, mode='lines+markers', name='Recall'))
-                
-                performance_fig.update_layout(
-                    title="Model Performance Metrics Over Time",
-                    xaxis_title="Date",
-                    yaxis_title="Metric Value",
-                    legend_title="Metrics"
-                )
+                if len(runs) > 0:
+                    # Extract metrics and timestamps
+                    timestamps = pd.to_datetime(runs['start_time']).dt.strftime('%Y-%m-%d')
+                    
+                    # Create performance graph
+                    performance_fig = go.Figure()
+                    
+                    if 'metrics.accuracy' in runs.columns:
+                        accuracy = runs['metrics.accuracy']
+                        performance_fig.add_trace(go.Scatter(x=timestamps, y=accuracy, mode='lines+markers', name='Accuracy'))
+                    
+                    # Add precision and recall if available
+                    if 'metrics.precision' in runs.columns:
+                        precision = runs['metrics.precision']
+                        performance_fig.add_trace(go.Scatter(x=timestamps, y=precision, mode='lines+markers', name='Precision'))
+                    
+                    if 'metrics.recall' in runs.columns:
+                        recall = runs['metrics.recall']
+                        performance_fig.add_trace(go.Scatter(x=timestamps, y=recall, mode='lines+markers', name='Recall'))
+                    
+                    performance_fig.update_layout(
+                        title="Model Performance Metrics Over Time",
+                        xaxis_title="Date",
+                        yaxis_title="Metric Value",
+                        legend_title="Metrics"
+                    )
+                else:
+                    performance_fig = go.Figure()
+                    performance_fig.update_layout(title="No model runs found in MLflow")
             else:
                 performance_fig = go.Figure()
-                performance_fig.update_layout(title="No model runs found in MLflow")
-        else:
+                performance_fig.update_layout(title="MLflow experiment not found")
+        except Exception as mlflow_error:
+            logger.error(f"Error accessing MLflow: {mlflow_error}")
             performance_fig = go.Figure()
-            performance_fig.update_layout(title="MLflow experiment not found")
+            performance_fig.update_layout(title="Error accessing MLflow data")
         
         return data_drift_summary, target_drift_summary, performance_fig
     
