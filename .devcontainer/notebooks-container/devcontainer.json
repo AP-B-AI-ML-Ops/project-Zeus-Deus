@@ -18,6 +18,8 @@
     "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind",
     "source=${localWorkspaceFolder}/data,target=/workspace/data,type=bind",
     "source=${localWorkspaceFolder}/notebooks,target=/workspace/notebooks,type=bind",
-    "source=${localWorkspaceFolder}/.cursor,target=/workspace/.cursor,type=bind"
-  ]
+    "source=${localWorkspaceFolder}/.cursor,target=/workspace/.cursor,type=bind",
+    "source=${localWorkspaceFolder}/.env,target=/workspace/.env,type=bind"
+  ],
+  "runArgs": ["--network=project_default"]
 }

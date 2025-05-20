@@ -2,3 +2,13 @@
 .cursor/
 .env
 data/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# MLflow outputs and logs
+notebooks/mlflow/

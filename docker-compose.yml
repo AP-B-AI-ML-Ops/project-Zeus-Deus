@@ -5,8 +5,6 @@ services:
       dockerfile: src/api/Dockerfile
     ports:
       - "8000:8000"
-    environment:
-      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
     env_file:
       - .env
     volumes:
@@ -14,13 +12,17 @@ services:
       - ./data:/app/data
       - ./notebooks:/app/notebooks
   mlflow:
-    image: ghcr.io/mlflow/mlflow:latest
+    build: ./experiment_tracking
     ports:
       - "5000:5000"
+
+  database:
+    build: ./database
+    restart: unless-stopped
     volumes:
-      - ./mlruns:/mlflow/mlruns
-    environment:
-      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+      - postgres-data:/var/lib/postgresql/data
+    env_file:
+      - ./database/.env
   # prefect:
   #   image: prefecthq/prefect:2-latest
   #   environment:
@@ -33,3 +35,6 @@ services:
   #     - "8050:8050"
   #   environment:
   #     - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}
+
+volumes:
+  postgres-data:
