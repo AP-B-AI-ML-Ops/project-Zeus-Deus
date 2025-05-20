@@ -40,7 +40,29 @@ services:
       - ./models:/app/models
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
-    command: prefect server start --host 0.0.0.0
+      - PREFECT_API_URL=http://prefect:4200/api
+    working_dir: /app/orchestration
+    command: prefect server start --host 0.0.0.0 --port 4200
+
+  prefect-worker:
+    image: prefecthq/prefect:2-latest
+    depends_on:
+      - prefect
+    volumes:
+      - ./orchestration:/app/orchestration
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - PREFECT_API_URL=http://prefect:4200/api
+    working_dir: /app/orchestration
+    command: >
+      bash -c "
+        sleep 10 &&
+        prefect work-pool create --type process wildfire-prediction-pool --overwrite &&
+        prefect worker start --pool wildfire-prediction-pool
+      "
 
   monitoring:
     build:
