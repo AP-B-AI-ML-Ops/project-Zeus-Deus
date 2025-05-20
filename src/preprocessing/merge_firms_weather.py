@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import pandas as pd
 from datetime import datetime
 
 # Set up logging
@@ -8,6 +9,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(mess
 
 FIRMS_DATA_PATH = os.path.join(os.path.dirname(__file__), '../../data/nasa_firms_data.json')
 WEATHER_DATA_PATH = os.path.join(os.path.dirname(__file__), '../../data/weather_data.json')
+VEGETATION_DATA_PATH = os.path.join(os.path.dirname(__file__), '../../data/vegetation_indices.json')
 MERGED_DATA_PATH = os.path.join(os.path.dirname(__file__), '../../data/merged_firms_weather.json')
 
 
@@ -43,8 +45,18 @@ def load_weather_data():
         return []
 
 
-def merge_events_with_weather(firms_events, weather_data):
+def load_vegetation_data():
+    try:
+        with open(VEGETATION_DATA_PATH, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        logging.error(f"Error loading vegetation data: {e}")
+        return []
+
+
+def merge_data(firms_events, weather_data, vegetation_data):
     merged = []
+    
     # Build a lookup for weather data by (lat, lon, date)
     weather_lookup = {}
     for entry in weather_data:
@@ -53,21 +65,44 @@ def merge_events_with_weather(firms_events, weather_data):
         weather_date = str(event["date"]).split(" ")[0]
         key = (round(float(event["lat"]), 2), round(float(event["lon"]), 2), weather_date)
         weather_lookup[key] = entry["weather"]
+    
+    # Build a lookup for vegetation data by (lat, lon, date)
+    veg_lookup = {}
+    for item in vegetation_data:
+        lat = round(float(item["latitude"]), 2)
+        lon = round(float(item["longitude"]), 2)
+        date = item["date"]
+        key = (lat, lon, date)
+        veg_lookup[key] = {
+            "ndvi": item["ndvi"],
+            "evi": item["evi"]
+        }
+    
     for event in firms_events:
         fire_date = str(event["date"]).split(" ")[0]
         key = (round(float(event["lat"]), 2), round(float(event["lon"]), 2), fire_date)
         weather = weather_lookup.get(key)
-        merged.append({"event": event, "weather": weather})
+        vegetation = veg_lookup.get(key)
+        
+        merged.append({
+            "event": event, 
+            "weather": weather,
+            "vegetation": vegetation
+        })
+    
     return merged
 
 
 def main():
     firms_events = load_firms_events()
     weather_data = load_weather_data()
-    if not firms_events or not weather_data:
-        logging.error("Missing data for merging. Exiting.")
+    vegetation_data = load_vegetation_data()
+    
+    if not firms_events:
+        logging.error("Missing FIRMS data for merging. Exiting.")
         return
-    merged = merge_events_with_weather(firms_events, weather_data)
+    
+    merged = merge_data(firms_events, weather_data, vegetation_data)
     with open(MERGED_DATA_PATH, 'w') as f:
         json.dump(merged, f, default=str)
     logging.info(f"Merged data saved to {MERGED_DATA_PATH}")
