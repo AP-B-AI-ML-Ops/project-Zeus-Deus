@@ -158,3 +158,74 @@ curl -X POST -H "Content-Type: application/json" -d '[{
   }
 }]' http://localhost:8000/predict
 ```
+
+## Orchestration with Prefect
+
+This project uses Prefect to orchestrate the entire MLOps workflow. Prefect manages data generation, model training, evaluation, and prediction in an automated fashion.
+
+### First-Time Setup
+
+1. Start all services:
+
+   ```bash
+   docker compose up -d
+   ```
+
+2. Wait for services to initialize (10-15 seconds)
+
+3. **Important:** For first-time setup, create required directories:
+
+   ```bash
+   docker exec -it project-api-1 bash -c "mkdir -p data/raw data/processed data/predictions models"
+   ```
+
+4. Run the complete MLOps pipeline first to generate data and train the model:
+
+   ```bash
+   docker exec -it project-prefect-1 bash -c "prefect deployment run 'Complete MLOps Pipeline/wildfire-prediction-deployment'"
+   ```
+
+   Wait for this to complete (check status in Prefect UI). This step is required before making predictions.
+
+   **Note:** The Complete MLOps Pipeline can take several minutes to run completely, especially for the first time. The Data Generation and Model Training steps will finish first, followed by Model Evaluation and Prediction steps. You can monitor the progress in the Prefect UI.
+
+5. After the model is trained, you can run the daily prediction flow:
+
+   ```bash
+   docker exec -it project-prefect-1 bash -c "prefect deployment run 'Daily Prediction Flow/daily-prediction-deployment'"
+   ```
+
+6. To verify everything is working:
+
+   - Check Prefect UI: http://localhost:4200 for successful flow runs
+   - Check MLflow UI: http://localhost:5000 for logged model experiments
+   - Examine the generated files:
+     ```bash
+     docker exec -it project-api-1 bash -c "ls -la data/predictions/"
+     ```
+
+7. Access the Prefect UI:
+   - Open your browser and navigate to: http://localhost:4200
+   - Here you can monitor flow runs, check logs, and manage your workflows
+
+### Scheduled Flows
+
+The following flows are automatically scheduled:
+
+- Daily Prediction Flow: Runs every day at 8:00 AM UTC
+- Complete MLOps Pipeline: Runs on the 1st of every month at midnight UTC
+
+### Flow Structure
+
+- **Complete MLOps Pipeline**: End-to-end pipeline for data generation, model training, evaluation, and prediction
+- **Daily Prediction Flow**: Generates new data and makes predictions using the latest model
+
+### Model Limitations
+
+This project is designed as an MLOps demonstration and educational tool. The wildfire prediction model:
+
+- Is trained on synthetic data, not real-world historical data
+- Uses simplified feature representations
+- Is not validated against actual wildfire occurrences
+
+For actual wildfire prediction, this architecture would need to be adapted to use comprehensive real-world data sources, domain expertise, and extensive validation.

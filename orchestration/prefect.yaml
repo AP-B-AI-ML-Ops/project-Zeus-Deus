@@ -21,12 +21,32 @@ pull:
 deployments:
   - name: wildfire-prediction-deployment
     entrypoint: workflows.py:complete_mlops_pipeline
-    schedule: null
+    schedule:
+      cron: "0 0 1 * *" # Run on the 1st of every month at midnight
+      timezone: UTC
     tags:
       - wildfire
       - production
-    description: "Pipeline for wildfire prediction model"
-    parameters: {}
+    description: "Monthly pipeline for data generation, model training, evaluation, and prediction"
+    parameters:
+      training_records: 1000
+      validation_records: 300
+      test_records: 200
+      production_records: 100
+    work_pool:
+      name: wildfire-prediction-pool
+      work_queue_name: default
+
+  - name: daily-prediction-deployment
+    entrypoint: workflows.py:daily_prediction_flow
+    schedule:
+      cron: "0 8 * * *" # Run every day at 8:00 AM
+      timezone: UTC
+    tags:
+      - wildfire
+      - production
+      - daily
+    description: "Daily pipeline for generating new data and making predictions"
     work_pool:
       name: wildfire-prediction-pool
       work_queue_name: default
