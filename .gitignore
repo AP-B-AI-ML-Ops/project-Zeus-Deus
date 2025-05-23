@@ -1,16 +1,10 @@
-.windsurfrules
-.cursor/
 .env
+.cursor
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+*.log
+*.db
 data/
 models/
-artifacts/
-
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-
-# Jupyter Notebook checkpoints
-.ipynb_checkpoints/
-
-# MLflow outputs and logs
-notebooks/mlflow/

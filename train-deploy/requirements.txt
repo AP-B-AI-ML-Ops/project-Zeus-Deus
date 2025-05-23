@@ -1,0 +1,9 @@
+ucimlrepo
+pandas
+numpy
+scikit-learn
+mlflow
+optuna
+jupyter
+matplotlib
+seaborn

@@ -1,26 +1,4 @@
 services:
-  api:
-    build:
-      context: .
-      dockerfile: src/api/Dockerfile
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    volumes:
-      - ./src:/app/src
-      - ./data:/app/data
-      - ./notebooks:/app/notebooks
-      - ./models:/app/models
-  mlflow:
-    build: ./experiment_tracking
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./mlflow:/mlflow
-    environment:
-      - MLFLOW_TRACKING_URI=sqlite:///mlflow.db
-
   database:
     build: ./database
     restart: unless-stopped
@@ -29,52 +7,22 @@ services:
     env_file:
       - ./database/.env
 
-  prefect:
-    image: prefecthq/prefect:2-latest
-    ports:
-      - "4200:4200"
+  train-deploy:
+    build: ./train-deploy
     volumes:
-      - ./orchestration:/app/orchestration
-      - ./src:/app/src
-      - ./data:/app/data
+      - ./train-deploy:/app
       - ./models:/app/models
-    environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-      - PREFECT_API_URL=http://prefect:4200/api
-    working_dir: /app/orchestration
-    command: prefect server start --host 0.0.0.0 --port 4200
-
-  prefect-worker:
-    image: prefecthq/prefect:2-latest
     depends_on:
-      - prefect
-    volumes:
-      - ./orchestration:/app/orchestration
-      - ./src:/app/src
-      - ./data:/app/data
-      - ./models:/app/models
-    environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-      - PREFECT_API_URL=http://prefect:4200/api
-    working_dir: /app/orchestration
-    command: >
-      bash -c "
-        sleep 10 &&
-        prefect work-pool create --type process wildfire-prediction-pool --overwrite &&
-        prefect worker start --pool wildfire-prediction-pool
-      "
+      - experiment-tracking
 
-  monitoring:
-    build:
-      context: ./monitoring
+  experiment-tracking:
+    build: ./experiment-tracking
     ports:
-      - "8050:8050"
-    volumes:
-      - ./monitoring:/app/monitoring
-      - ./data:/app/data
-      - ./models:/app/models
-    environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - 5000:5000
+    env_file:
+      - ./database/.env
+    depends_on:
+      - database
 
 volumes:
   postgres-data:
