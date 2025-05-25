@@ -24,5 +24,17 @@ services:
     depends_on:
       - database
 
+  orchestration:
+    build:
+      context: .
+      dockerfile: orchestration/Dockerfile
+    ports:
+      - 4200:4200
+    volumes:
+      - ./orchestration:/app
+      - ./train-deploy:/train-deploy
+    depends_on:
+      - experiment-tracking
+
 volumes:
   postgres-data:
