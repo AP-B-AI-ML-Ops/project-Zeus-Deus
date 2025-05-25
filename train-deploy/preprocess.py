@@ -20,10 +20,10 @@ def load_and_save_dataset():
     print(f"Dataset shape: {df.shape}")
     print(f"Columns: {df.columns.tolist()}")
 
-    os.makedirs("data", exist_ok=True)
+    os.makedirs("/shared/data", exist_ok=True)
 
-    df.to_csv("data/forest_fires.csv", index=False)
-    print("Dataset saved to data/forest_fires.csv")
+    df.to_csv("/shared/data/forest_fires.csv", index=False)
+    print("Dataset saved to /shared/data/forest_fires.csv")
 
     print("\nDataset Info:")
     print(forest_fires.metadata)
@@ -34,7 +34,7 @@ def load_and_save_dataset():
 
 def preprocess_data():
     print("Loading data...")
-    df = pd.read_csv("data/forest_fires.csv")
+    df = pd.read_csv("/shared/data/forest_fires.csv")
 
     print("Processing data...")
 
@@ -79,13 +79,13 @@ def preprocess_data():
     }
     
     for name, data in datasets.items():
-        with open(f'data/{name}.pkl', 'wb') as f:
+        with open(f'/shared/data/{name}.pkl', 'wb') as f:
             pickle.dump(data, f)
         print(f"Saved {name}.pkl")
     
     # Save feature names for later use
     feature_names = X.columns.tolist()
-    with open('data/feature_names.pkl', 'wb') as f:
+    with open('/shared/data/feature_names.pkl', 'wb') as f:
         pickle.dump(feature_names, f)
     
     return datasets
@@ -98,4 +98,6 @@ if __name__ == "__main__":
     datasets = preprocess_data()
     
     print("Preprocessing completed successfully!")
+    
+    os.makedirs("/shared/models", exist_ok=True)
     

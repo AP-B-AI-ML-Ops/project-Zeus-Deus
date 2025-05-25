@@ -11,7 +11,9 @@ services:
     build: ./train-deploy
     volumes:
       - ./train-deploy:/app
-      - ./models:/app/models
+      - mlops-data:/shared/data
+      - mlops-models:/shared/models
+    command: ["tail", "-f", "/dev/null"]
     depends_on:
       - experiment-tracking
 
@@ -33,8 +35,12 @@ services:
     volumes:
       - ./orchestration:/app
       - ./train-deploy:/train-deploy
+      - mlops-data:/shared/data
+      - mlops-models:/shared/models
     depends_on:
       - experiment-tracking
 
 volumes:
   postgres-data:
+  mlops-data:
+  mlops-models:

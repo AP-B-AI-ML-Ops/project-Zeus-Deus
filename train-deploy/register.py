@@ -19,12 +19,12 @@ def load_pickle(filename: str):
 
 def train_and_log_model(params):
     # Load data
-    X_train = load_pickle("data/X_train.pkl")
-    y_train = load_pickle("data/y_train.pkl")
-    X_val = load_pickle("data/X_val.pkl")
-    y_val = load_pickle("data/y_val.pkl")
-    X_test = load_pickle("data/X_test.pkl")
-    y_test = load_pickle("data/y_test.pkl")
+    X_train = load_pickle("/shared/data/X_train.pkl")
+    y_train = load_pickle("/shared/data/y_train.pkl")
+    X_val = load_pickle("/shared/data/X_val.pkl")
+    y_val = load_pickle("/shared/data/y_val.pkl")
+    X_test = load_pickle("/shared/data/X_test.pkl")
+    y_test = load_pickle("/shared/data/y_test.pkl")
 
     with mlflow.start_run():
         # Only use the parameters we care about

@@ -9,4 +9,4 @@ RUN pip install -r requirements.txt --upgrade
 
 COPY . .
 
-CMD [ "python", "main.py" ]
+# CMD [ "python", "main.py" ]

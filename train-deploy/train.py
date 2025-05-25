@@ -34,4 +34,4 @@ def run_train(data_path: str):
 
 if __name__ == "__main__":
     print("...training models")
-    run_train("./data/") 
+    run_train("/shared/data/") 

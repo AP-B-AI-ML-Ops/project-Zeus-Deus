@@ -16,10 +16,10 @@ def load_pickle(filename: str):
 
 def objective(trial):
     # Load data
-    X_train = load_pickle(os.path.join("data", "X_train.pkl"))
-    y_train = load_pickle(os.path.join("data", "y_train.pkl"))
-    X_val = load_pickle(os.path.join("data", "X_val.pkl"))
-    y_val = load_pickle(os.path.join("data", "y_val.pkl"))
+    X_train = load_pickle(os.path.join("/shared/data", "X_train.pkl"))
+    y_train = load_pickle(os.path.join("/shared/data", "y_train.pkl"))
+    X_val = load_pickle(os.path.join("/shared/data", "X_val.pkl"))
+    y_val = load_pickle(os.path.join("/shared/data", "y_val.pkl"))
 
     # Hyperparameters to tune
     n_estimators = trial.suggest_int("n_estimators", 50, 300)
@@ -77,4 +77,4 @@ def run_optimization(data_path: str, num_trials: int):
 
 if __name__ == "__main__":
     print("...starting HPO with Optuna")
-    run_optimization("data", 20)
+    run_optimization("/shared/data", 20)
