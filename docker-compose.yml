@@ -25,6 +25,8 @@ services:
       - ./database/.env
     depends_on:
       - database
+    volumes:
+      - mlflow-artifacts:/mlflow/mlruns
 
   orchestration:
     build:
@@ -37,10 +39,41 @@ services:
       - ./train-deploy:/train-deploy
       - mlops-data:/shared/data
       - mlops-models:/shared/models
+      - mlflow-artifacts:/mlflow/mlruns
     depends_on:
       - experiment-tracking
+
+  web-api:
+    build:
+      context: .
+      dockerfile: web-api/Dockerfile
+    ports:
+      - "9696:9696"
+    volumes:
+      - mlflow-artifacts:/mlflow/mlruns
+      - mlops-data:/shared/data
+      - mlops-models:/shared/models
+    depends_on:
+      - experiment-tracking
+      - database
+
+  test-api:
+    image: python:3.11-slim
+    volumes:
+      - ./tests:/tests
+    depends_on:
+      - web-api
+    working_dir: /tests
+    command: |
+      bash -c "
+        pip install requests &&
+        echo '🚀 Testing API...' &&
+        python test_api.py
+      "
+    profiles: ["test"] # Prevents auto start
 
 volumes:
   postgres-data:
   mlops-data:
   mlops-models:
+  mlflow-artifacts:
