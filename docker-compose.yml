@@ -72,8 +72,20 @@ services:
       "
     profiles: ["test"] # Prevents auto start
 
+  batch-service:
+    build: ./deploy-batch
+    volumes:
+      - batch-data:/batch-data
+      - mlflow-artifacts:/mlflow/mlruns
+      - mlops-data:/shared/data
+      - mlops-models:/shared/models
+    depends_on:
+      - orchestration
+    profiles: ["batch"]
+
 volumes:
   postgres-data:
   mlops-data:
   mlops-models:
   mlflow-artifacts:
+  batch-data:
