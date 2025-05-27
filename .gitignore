@@ -8,3 +8,5 @@ __pycache__/
 *.db
 data/
 models/
+monitoring/reports/*
+!monitoring/reports/.gitkeep

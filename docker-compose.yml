@@ -83,6 +83,15 @@ services:
       - orchestration
     profiles: ["batch"]
 
+  monitoring:
+    build: ./monitoring
+    volumes:
+      - batch-data:/data # Mount batch-data to /data in container
+      - ./monitoring/reports:/reports
+    depends_on:
+      - orchestration
+    profiles: ["monitoring"]
+
 volumes:
   postgres-data:
   mlops-data:
