@@ -70,16 +70,34 @@ This project focuses on building an end-to-end MLOps pipeline for wildfire predi
 2. Monitor batch processing in the Prefect UI at `http://localhost:4200`
 3. Predictions are saved in the `batch-data` volume at `/batch-data/output`
 
+### Generate Additional Data for Monitoring
+
+To create sufficient data for meaningful monitoring, repeat the model training and batch processing steps:
+
+1. Run the orchestration flow again:
+
+   ```bash
+   docker compose exec -it orchestration /bin/bash
+   python flow.py
+   ```
+
+2. Run the batch service again:
+   ```bash
+   docker compose --profile batch-service up --build batch-service
+   ```
+
+This will generate additional data points that will be used for model monitoring and drift detection.
+
 ### API Testing
 
-Test the prediction API with sample requests:
+Test the prediction API with sample requests. The test results will be displayed directly in the terminal:
 
 ```bash
 docker compose up -d
 docker compose --profile test up test-api
 ```
 
-The test script verifies:
+The test script will output the results of:
 
 - API health check
 - High-risk fire scenario prediction
@@ -92,7 +110,12 @@ The test script verifies:
    docker compose --profile monitoring up monitoring -d
    ```
 2. View monitoring reports in the `monitoring/reports` directory
-3. Reports include CSV data and visualizations of model metrics
+3. Reports include:
+
+   - CSV files with detailed metrics
+   - PNG visualizations of model metrics
+
+   **Note about the visualization**: The PNG graph might show what appears to be a single line because the batch processing was run back-to-back with minimal time difference between runs. This causes the data points to overlap in the visualization. In a production environment with more time between runs, you would see distinct data points showing the model's performance over time.
 
 ## Monitoring
 
